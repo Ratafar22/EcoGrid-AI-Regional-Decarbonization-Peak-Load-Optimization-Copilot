@@ -1,103 +1,87 @@
-# ⚡ EcoGrid AI: Regional Decarbonization & Peak-Load Optimization Copilot
+# ⚡ EcoGrid AI
+### Regional Decarbonization & Peak-Load Optimization Copilot
 
-**An end-to-end Energy Intelligence, Contextual Machine Learning, and GenAI Advisory solution designed to bridge the gap between grid visibility and actionable decarbonization in Auvergne-Rhône-Alpes, France.**
+**Turning regional energy data into insights for reducing emissions and managing peak demand.**
 
-🔗 **[Live Interactive App (Streamlit)](#)** *(https://ecogrid-ai-regional-decarbonization-peak-load-optimization-cop.streamlit.app/)*  
+I built EcoGrid AI to explore how data analytics and AI can help turn energy consumption data into practical sustainability decisions. The project combines **Power BI, machine learning and an AI advisor**, using data from **Auvergne-Rhône-Alpes, France**, the region that includes Grenoble.
+
+[Open the Streamlit app](https://ecogrid-ai-regional-decarbonization-peak-load-optimization-cop.streamlit.app/)
+
+
+## The business problem
+
+Energy and sustainability managers need to decide where to focus their efforts: reducing gas use, managing busy periods or investigating unusual demand. Total consumption alone does not reveal these priorities. The energy source used most may not produce the most emissions, and monthly totals can hide unusual hourly patterns.
+
+EcoGrid AI addresses this through three stages: **understand energy use, identify unusual hours, and explain possible actions**. It supports regional investigations; decisions about individual facilities require local operating information.
+
+## Data source
+
+The project uses **2024–September 2026** electricity and gas consumption data from [ODRÉ — Open Data Réseaux Énergies](https://odre.opendatasoft.com/explore/dataset/consommation-quotidienne-brute-regionale/), provided by **RTE, NaTran and Teréga**, and filtered to **Auvergne-Rhône-Alpes**.
+
+Electricity readings are recorded every 30 minutes and gas readings hourly. **The findings below cover January–September 2026**, matching the selected Power BI report period and the machine-learning analysis.
+
+## Stage 1 — Understand energy use and emissions
+**Power Query · Power BI**
 📊 **[Executive BI Dashboard Preview](#executive-bi-insights-power-bi)**
 
----
+I first aligned electricity and gas readings to a common hourly basis. Because the source measures demand in megawatts (MW), simply adding two half-hourly electricity readings would overstate energy use. I averaged those readings within each hour and combined them with the hourly gas values. For a complete one-hour interval, average MW × one hour gives energy in MWh.
 
-## 1. Executive Summary & Problem Statement
+I then recalculated combined consumption, compared it with the source total, and added day-of-week fields. The Power BI report uses this prepared data to show consumption trends, estimated emissions and demand by hour and day.
 
-### The Business & Climate Challenge
-Industrial and commercial hubs across regions like **Auvergne-Rhône-Alpes (Grenoble)** face two critical energy transition bottlenecks:
-1. **The Fossil-Fuel Carbon Trap:** While France benefits from a low-carbon electricity grid (~0.052 tCO₂/MWh), heavy reliance on natural gas (~0.205 tCO₂/MWh) for heating and industrial processes creates disproportionate carbon footprints.
-2. **The "Visibility vs. Optimization" Gap:** As highlighted in Schneider Electric’s *AI for Climate* research (October 2026), raw telemetry dashboards alone do not automatically reduce emissions. Sustainability managers and facility operators struggle to translate millions of raw grid data points into timely **peak-shaving** and **electrification** decisions.
+| January–September 2026 | Electricity | Gas | Combined |
+| --- | --- | --- | --- |
+| Consumption | 46.19 million MWh | 23.12 million MWh | ≈69.30 million MWh |
+| Estimated emissions | 2.40 million tonnes CO₂e | 4.74 million tonnes CO₂e | 7.14 million tonnes CO₂e |
 
-### The Solution: EcoGrid AI
-**EcoGrid AI** transforms raw regional grid telemetry (ODRÉ) into an automated, three-stage decision-support pipeline:
-* **Stage 1 (Data Engineering & BI Visibility):** Reconciles multi-frequency gas and electricity telemetry to quantify true cross-fuel CO₂ disparities, identify weekday peak-strain windows, and model the **~22% AI optimization savings benchmark**.
-* **Stage 2 (Contextual Machine Learning):** Deploys a lightweight **Isolation Forest** model enriched with temporal context (`Month` + `Hour`) to detect both extreme winter demand surges and subtle weekend/shoulder-season anomalies.
-* **Stage 3 (GenAI Sustainability Advisory):** Synthesizes statistical findings and ML anomaly logs into executive-ready recommendations for industrial load-shifting, battery storage dispatch, and heat-pump electrification.
+**Gas accounts for about one-third of consumption but two-thirds of estimated emissions.** This makes gas-dependent activities a useful starting point for assessing electrification, such as replacing suitable gas heating with heat pumps.
 
----
+Demand is also higher on weekday mornings than at comparable weekend hours, highlighting periods to examine for shifting flexible energy use. The dashboard’s **66.37% “Electrification Opportunity”** represents gas’s share of estimated emissions, not guaranteed emissions savings.
 
-## 2. Architecture & End-to-End Methodology
+## Stage 2 — Find unusual hours worth investigating
+**Python · Isolation Forest**
 
-```text
-[ODRÉ Open Grid Telemetry] ──▶ [Power Query ETL & Resampling] ──▶ [Power BI Executive Dashboard]
-                                          │
-                                          ▼
-                            [Contextual Isolation Forest ML] ──▶ [GenAI Sustainability Advisor (Streamlit)]
-```
+I used **Isolation Forest**, a machine-learning model, to identify unusual observations based on consumption, month and time of day. Configured to flag approximately 1% of observations, it identified **66 unusual hours**.
 
----
+- **6 January at 09:00:** The highest-consumption flagged hour, at approximately **26,368 MWh** of combined gas and electricity use.
+- **2 April at 07:00:** A flagged observation outside January.
+- **19, 20 and 27 September at 23:00:** Lower-consumption observations flagged as unusual.
 
-## 3. Data Quality Engineering & Problem-Solving Log
+These results provide a shortlist for investigation. They do not establish the cause of a change or prove energy waste.
 
-Real-world energy data is rarely ready for modeling out of the box. During exploratory auditing of the official **ODRÉ (*Open Data Réseaux Énergies*)** regional dataset (`Auvergne-Rhône-Alpes`, INSEE 84), a critical data integrity trap was identified and resolved:
+[Detection code](EcoGRidAI_hourly_anomaly.py) · [Exported results](detected_anomalies_2026_hourly.csv)
 
-| Challenge Identified | Root Cause Analysis | Engineering Solution Implemented |
-| :--- | :--- | :--- |
-| **1. Sampling Frequency Mismatch** | Electricity demand (`RTE`) is logged at **30-minute intervals** (`:00`, `:30`), whereas natural gas demand (`GRTgaz/Teréga`) is logged at **1-hour intervals** (`:00` only), creating 50% `null` values on half-hour rows. | Built an `Hour Floor` timestamp key in Power Query to group sub-hourly records onto a unified hourly grain. |
-| **2. The 2x Double-Counting Trap** | Summing half-hourly **Megawatt (MW)** power readings artificially doubles total energy volume (`92.36M` vs. true `46.19M MWh`), making electricity appear larger than combined gas + electricity (`69.37M`). | Applied **Mean (`Average`) aggregation** to half-hourly MW electricity readings to convert instantaneous power rates into true hourly energy volume (`MWh`). |
-| **3. Cross-Fuel Total Reconciliation** | The source's raw combined column (`Consommation brute totale`) only captured top-of-the-hour (`:00`) snapshots, ignoring `:30` intra-hour fluctuations. | Engineered a `Recalculated Total` (`Avg Hourly Electricity + Hourly Gas`), reconciling within **0.1%** of official totals (`69.30M` vs. `69.37M MWh`) while preserving full intra-hour accuracy. |
+## Stage 3 — GenAI Advisor: Turn findings into practical recommendations
+**Streamlit · OpenAI API**
 
----
+The app displays the headline findings and detected anomalies. Users can ask questions such as:
 
-## 4. Key Analytical Findings & Business Insights
+> How could operators respond to morning demand peaks and reduce emissions associated with gas use?
 
-### 📊 Stage 1: Executive BI Insights (Power BI)
-*(Upload a screenshot of your Power BI dashboard as `powerbi_dashboard.png` in your repo to display it below)*  
-![Power BI Energy & Carbon Dashboard](powerbi_dashboard.png)
+The AI advisor uses a prepared summary of the analysis to suggest actions: reviewing operating and heating schedules, assessing battery storage for electricity peaks, exploring suitable heat-pump applications, and investigating unusual demand against local conditions.
 
-* **The Electrification Business Case (Volume vs. Carbon Flip):**
-  * **Energy Consumption Mix:** Electricity accounts for **66.6% (`46.19M MWh`)** of regional demand, while natural gas represents **33.4% (`23.12M MWh`)**.
-  * **Carbon Emissions Reality:** Because natural gas emits nearly **4x more CO₂ per MWh** than the French power grid, gas generates **66.4% (`4.74M Tons CO₂`)** of total emissions compared to **33.6% (`2.40M Tons CO₂`)** for electricity. **Electrifying that remaining 33.4% gas share is the single highest-leverage decarbonization action.**
-* **Predictable Weekday Peak Strain (`07:00 – 10:00` & `18:00 – 20:00`):**
-  * Temporal heatmap analysis reveals sharp demand surges on **Tuesday and Wednesday mornings (`07:00–09:00`)** driven by simultaneous industrial shift startups and commercial HVAC heating, followed by a **20%–25% load drop** on weekends.
-* **AI Optimization Savings Potential (`1.57M Tons CO₂`):**
-  * Applying Schneider Electric’s empirical *AI for Climate* benchmark (**21.7% – 22.4% energy reduction** via AI-enabled building and process controls) projects an annual regional reduction of **~1.57 Million Tons of CO₂**.
+Anomaly detection runs on the saved dataset; headline metrics and the advisor’s input summary are predefined. An OpenAI API key enables generated responses, while demo mode displays a sample brief.
 
----
+## Emissions assumptions and savings scenario
 
-### 🤖 Stage 2: Contextual Machine Learning Anomaly Detection
-* **The Modeling Challenge:** A baseline `Isolation Forest` trained solely on total energy volume flagged 100% of anomalies inside a single winter cold snap (January 1–12, 2026), missing subtle operational anomalies during warmer months.
-* **The Contextual Upgrade:** By engineering temporal features (`Month_Num` and `Hour_Num`) alongside `Recalculated Total`, the model learned seasonal and diurnal baselines—flagging **66 contextual anomalies** across multiple seasons:
-  1. **Severe Winter Ramp-Up Peaks (`Jan 6–7, 2026`, `07:00–11:00`):** Demand spiked to **26,368 MWh** (more than double the ~12,000 MWh average), requiring urgent peak-shaving and battery dispatch.
-  2. **Shoulder-Season & Weekend Outliers (`Apr 2` and `Sep 19–27, 2026`):** Flagged abnormal weekend baseload spikes (Sat/Sun) where commercial/industrial HVAC or equipment remained active during non-operating hours.
+Emissions are estimated using fixed reference factors and expressed as **CO₂ equivalent (CO₂e)**.
 
----
+| Energy source | Factor used | Basis |
+| --- | --- | --- |
+| Electricity | 0.052 tonnes CO₂e/MWh | Rounded from the ADEME-derived 51.9 gCO₂e/kWh value published in [SNCF’s methodology](https://www.sncf-voyageurs.com/fr/comparateur-carbone/). |
+| Gas | 0.205 tonnes CO₂e/MWh PCS | Approximate historical lifecycle factor: [ADEME’s 2015 reference](https://prod-basecarbonesolo.ademe-dri.fr/documentation/UPLOAD_DOC_FR/gaz.htm) of 0.227 kgCO₂e/kWh PCI ÷ [1.11](https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000788395/2026-01-23) ≈ 0.205 kgCO₂e/kWh PCS. |
 
-### 💬 Stage 3: GenAI Sustainability & Grid Optimization Advisor
-To close the gap between technical detection and executive execution, the Streamlit application integrates a **GenAI Advisory Layer** that ingests live telemetry metrics and ML anomaly timestamps to generate targeted recommendations:
-* **Peak Shaving:** Automated pre-heating schedules (`04:00–06:00` off-peak) and behind-the-meter battery discharge prior to `07:00` industrial ramp-ups.
-* **Industrial Electrification:** Prioritizing commercial heat-pump retrofits to displace high-carbon gas heating (`4.74M Tons CO₂`).
-* **Automated Fault Detection:** Auditing weekend baseload anomalies (`Sep 19–27`) to eliminate idle equipment energy waste.
+The gas factor includes upstream emissions and combustion, and uses the same **PCS energy basis** as ODRÉ. Both factors are held constant for this analysis rather than tracking changes each year.
 
----
+The dashboard’s **1.57 million tonnes CO₂e savings scenario** applies approximately 22% to the period’s estimated emissions. This is inspired by [Schneider Electric’s building-efficiency research](https://www.se.com/ww/en/insights/electricity-4-0/digitalization/can-ai-close-buildings-efficiency-gap/), which reports modelled energy savings of 21.7%–22.4% from AI-enabled HVAC optimization with smart building management.
 
-## 5. Tech Stack & How to Run Locally
+The estimated 1.57 million tonnes CO₂e represents potential savings if a similar 22% reduction were achieved across the region. Actual savings would depend on the measures implemented and local conditions.
 
-* **Data Engineering & BI:** Power Query (M), DAX, Microsoft Power BI
-* **Machine Learning & Analytics:** Python, `pandas`, `scikit-learn` (`IsolationForest`), `openpyxl`
-* **Application & GenAI Layer:** `Streamlit`, `OpenAI API` (with built-in executive Demo Mode)
+## Future roadmap
+The next steps would make EcoGrid AI more responsive to changing conditions and strengthen its recommendations:
+- Connect the GenAI advisor directly to analysis results: Automatically supply calculated metrics and detected anomalies so its responses reflect the dataset being analysed.
+- Add weather context: Include temperature data to help distinguish expected heating demand from unusual consumption that needs further investigation.
+- Automate data updates: Connect to updated energy consumption and grid carbon-intensity data to explore when shifting electricity use could reduce emissions.
 
-### Quickstart Installation
-```bash
-# 1. Clone the repository
-git clone https://github.com
-cd EcoGrid-AI-Decarbonization-Copilot
 
-# 2. Install dependencies
-pip install -r requirements.txt
+**Author: Rukayat Rauf**
 
-# 3. Launch the Streamlit application
-streamlit run app.py
-```
-
----
-
-## 6. Future Roadmap
-* **Dynamic Weather Normalization:** Integrate Météo-France Heating Degree Days (HDD) to separate temperature-driven heating spikes from true equipment inefficiency.
-* **Live Grid Carbon Intensity API:** Connect real-time RTE *éCO2mix* API feeds to trigger automated load-shifting alerts when marginal grid carbon intensity rises.
