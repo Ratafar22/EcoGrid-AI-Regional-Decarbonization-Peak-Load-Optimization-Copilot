@@ -39,15 +39,15 @@ I then recalculated combined consumption, compared it with the source total, and
 Demand is also higher on weekday mornings than at comparable weekend hours, highlighting periods to examine for shifting flexible energy use. The dashboard’s **66.37% “Electrification Opportunity”** represents gas’s share of estimated emissions, not guaranteed emissions savings.
 
 ## Stage 2 — Find unusual hours worth investigating
-**Python · Isolation Forest**
+**Python · pandas · Scikit-learn · Isolation Forest**
 
 I used **Isolation Forest**, a machine-learning model, to identify unusual observations based on consumption, month and time of day. Configured to flag approximately 1% of observations, it identified **66 unusual hours**.
 
-- **6 January at 09:00:** The highest-consumption flagged hour, at approximately **26,368 MWh** of combined gas and electricity use.
-- **2 April at 07:00:** A flagged observation outside January.
-- **19, 20 and 27 September at 23:00:** Lower-consumption observations flagged as unusual.
+- **6 January at 09:00:** The highest-consumption flagged hour, at approximately **26,368 MWh** of combined gas and electricity use. One possibility is that cold-weather heating coincided with factories starting their morning shifts and commercial buildings warming up.
+- **2 April at 07:00:** stood out on a Thursday morning in spring. Was it unusually cold for April, and did buildings still need heating as the working day began?
+- **19, 20 and 27 September at 23:00:** were lower-consumption hours late on weekend nights. Comparing them with other weekend nights could show whether demand was higher or lower than usual before investigating equipment schedules or changes in temperature.
 
-These results provide a shortlist for investigation. They do not establish the cause of a change or prove energy waste.
+These hours give operators a shortlist for investigation. Historical weather records can help test the heating explanations. Facility meter readings and operating schedules can show whether individual sites followed the regional pattern.
 
 [Detection code](EcoGRidAI_hourly_anomaly.py) · [Exported results](detected_anomalies_2026_hourly.csv)
 
