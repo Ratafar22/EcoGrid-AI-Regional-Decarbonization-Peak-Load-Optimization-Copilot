@@ -1,5 +1,3 @@
-# EcoGrid-AI-Regional-Decarbonization-Peak-Load-Optimization-Copilot
-
 # ⚡ EcoGrid AI: Regional Decarbonization & Peak-Load Optimization Copilot
 
 **An end-to-end Energy Intelligence, Contextual Machine Learning, and GenAI Advisory solution designed to bridge the gap between grid visibility and actionable decarbonization in Auvergne-Rhône-Alpes, France.**
