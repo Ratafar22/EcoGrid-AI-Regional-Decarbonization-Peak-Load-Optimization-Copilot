@@ -63,10 +63,10 @@ st.dataframe(
 
 # 4. GenAI Sustainability Advisory Layer
 st.subheader("🤖 GenAI Sustainability & Grid Optimization Advisor")
-api_key = st.text_input(
-    "Enter OpenAI API Key (leave blank to preview sample AI executive brief):",
-    type="password",
-)
+
+# Automatically load your hidden key from Streamlit Secrets
+api_key = st.secrets.get("OPENAI_API_KEY", None)
+
 user_question = st.text_input(
     "Ask the Energy Advisor:",
     value=(
@@ -84,27 +84,31 @@ if st.button("Generate Executive Recommendations"):
     Top ML Anomalies: Jan 6-7, 2026 (07:00-11:00) reaching 26,368 MWh, plus shoulder/weekend anomalies on Apr 2 and Sep 19-27, 2026.
     """
 
-  if api_key:
-    client = openai.OpenAI(api_key=api_key)
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a Schneider Electric Sustainability Advisory"
-                    " consultant. Provide concise, actionable recommendations"
-                    " referencing EcoStruxure, peak shaving, and"
-                    " electrification."
-                ),
-            },
-            {
-                "role": "user",
-                "content": f"Telemetry Summary:\n{context}\n\nQuestion: {user_question}",
-            },
-        ],
-    )
-    st.success(response.choices[0].message.content)
+  if api_key and openai:
+    with st.spinner("Analyzing regional telemetry..."):
+      client = openai.OpenAI(api_key=api_key)
+      response = client.chat.completions.create(
+          model="gpt-4o-mini",
+          messages=[
+              {
+                  "role": "system",
+                  "content": (
+                      "You are a Schneider Electric Sustainability Advisory"
+                      " consultant. Provide concise, actionable"
+                      " recommendations referencing EcoStruxure, peak shaving,"
+                      " and electrification."
+                  ),
+              },
+              {
+                  "role": "user",
+                  "content": (
+                      f"Telemetry Summary:\n{context}\n\nQuestion:"
+                      f" {user_question}"
+                  ),
+              },
+          ],
+      )
+      st.success(response.choices[0].message.content)
   else:
     st.info("""
         **Sample AI Executive Brief (Demo Mode):**
