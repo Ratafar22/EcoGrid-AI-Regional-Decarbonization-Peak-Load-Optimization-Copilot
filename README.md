@@ -22,6 +22,7 @@ Electricity readings are recorded every 30 minutes and gas readings hourly. **Th
 
 ## Stage 1 — Understand energy use and emissions
 **Power Query · Power BI**
+
 📊 **[Executive BI Dashboard Preview](#executive-bi-insights-power-bi)**
 
 I first aligned electricity and gas readings to a common hourly basis. Because the source measures demand in megawatts (MW), simply adding two half-hourly electricity readings would overstate energy use. I averaged those readings within each hour and combined them with the hourly gas values. For a complete one-hour interval, average MW × one hour gives energy in MWh.
