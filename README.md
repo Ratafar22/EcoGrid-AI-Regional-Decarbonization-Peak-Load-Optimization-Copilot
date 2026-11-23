@@ -2,7 +2,7 @@
 
 **An end-to-end Energy Intelligence, Contextual Machine Learning, and GenAI Advisory solution designed to bridge the gap between grid visibility and actionable decarbonization in Auvergne-Rhône-Alpes, France.**
 
-🔗 **[Live Interactive App (Streamlit)](#)** *(Insert your Streamlit Cloud URL here)*  
+🔗 **[Live Interactive App (Streamlit)](#)** *([Insert your Streamlit Cloud URL here](https://ecogrid-ai-regional-decarbonization-peak-load-optimization-cop.streamlit.app/))*  
 📊 **[Executive BI Dashboard Preview](#executive-bi-insights-power-bi)**
 
 ---
